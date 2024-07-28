@@ -2,6 +2,8 @@ package com.web.service;
 
 import com.web.dto.ProductExcel;
 import com.web.dto.ProductSpecification;
+import com.web.elasticsearch.model.ProductSearch;
+import com.web.elasticsearch.repository.ProductSearchRepository;
 import com.web.entity.*;
 import com.web.exception.MessageException;
 import com.web.repository.*;
@@ -38,6 +40,9 @@ public class ProductService {
 
     @Autowired
     private TrademarkRepository trademarkRepository;
+
+    @Autowired
+    private ProductSearchRepository productSearchRepository;
 
     @Autowired
     EntityManager em;
@@ -157,5 +162,10 @@ public class ProductService {
             }
         }
         return list;
+    }
+
+    public Iterable<ProductSearch> findAll(){
+        Iterable<ProductSearch> iterable = productSearchRepository.findAll();
+        return iterable;
     }
 }

@@ -21,6 +21,9 @@ public class CategoryApi {
     @GetMapping("/public/all-category")
     public ResponseEntity<?> findAllCategory() {
         List<Category> result = categoryRepository.findAll();
+        result.forEach(p->{
+            System.out.println(p.getProducts().size());
+        });
         return new ResponseEntity(result, HttpStatus.CREATED);
     }
 

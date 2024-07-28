@@ -78,4 +78,10 @@ public class ProductApi {
         List<ProductExcel> result = productService.excelProduct(type);
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
+
+    @GetMapping("/public/all-product-search")
+    public ResponseEntity<?> allProductSearch(){
+        Iterable<com.web.elasticsearch.model.ProductSearch> result = productService.findAll();
+        return new ResponseEntity<>(result, HttpStatus.OK);
+    }
 }
