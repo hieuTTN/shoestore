@@ -6,18 +6,30 @@ import com.web.elasticsearch.model.ProductSearch;
 import com.web.elasticsearch.repository.ProductSearchRepository;
 import com.web.entity.*;
 import com.web.exception.MessageException;
+import com.web.mapper.ProductMapper;
 import com.web.repository.*;
+import org.apache.lucene.search.join.ScoreMode;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Component
 @Repository
@@ -45,6 +57,12 @@ public class ProductService {
     private ProductSearchRepository productSearchRepository;
 
     @Autowired
+    private ProductMapper productMapper;
+
+    @Autowired
+    private ElasticsearchRestTemplate elasticsearchRestTemplate;
+
+    @Autowired
     EntityManager em;
 
     
@@ -66,6 +84,8 @@ public class ProductService {
             }
             sizeRepository.save(size);
         }
+        ProductSearch ps = productMapper.productToProductSearch(result);
+        productSearchRepository.save(ps);
         return result;
     }
 
@@ -92,6 +112,8 @@ public class ProductService {
             }
             sizeRepository.save(size);
         }
+        ProductSearch ps = productMapper.productToProductSearch(result);
+        productSearchRepository.save(ps);
         return result;
     }
 
@@ -107,6 +129,7 @@ public class ProductService {
         else{
             productRepository.deleteById(idProduct);
         }
+        productSearchRepository.deleteById(idProduct);
     }
 
     public Product findById(Long id) {
@@ -167,5 +190,69 @@ public class ProductService {
     public Iterable<ProductSearch> findAll(){
         Iterable<ProductSearch> iterable = productSearchRepository.findAll();
         return iterable;
+    }
+
+
+    public List<ProductSearch> searchByParam(String param){
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                .must(QueryBuilders.matchQuery("name", param))
+                .must(QueryBuilders.nestedQuery("category",
+                        QueryBuilders.matchQuery("category.name", param),
+                        ScoreMode.Avg));
+        NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
+                .withQuery(boolQuery)
+                .build();
+
+        SearchHits<ProductSearch> results = elasticsearchRestTemplate.search(nativeSearchQuery, ProductSearch.class, IndexCoordinates.of("product"));
+        return results.getSearchHits().stream()
+                .map(hit -> hit.getContent())
+                .collect(Collectors.toList());
+    }
+
+    public Page<ProductSearch> searchByParam(String param, Pageable pageable){
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                .should(QueryBuilders.multiMatchQuery(param, "name","category.name"))
+                .should(QueryBuilders.termQuery("code.keyword", param));
+        NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
+                .withQuery(boolQuery)
+                .withPageable(pageable)
+                .build();
+
+        SearchHits<ProductSearch> results = elasticsearchRestTemplate.search(nativeSearchQuery, ProductSearch.class, IndexCoordinates.of("product"));
+        List<ProductSearch> products = results.getSearchHits().stream()
+                .map(hit -> hit.getContent())
+                .collect(Collectors.toList());
+        return new PageImpl<>(products, pageable, results.getTotalHits());
+    }
+
+    public Page<ProductSearch> searchFullProduct(List<Long> categoryIds, List<Long> trademarkIds, Double minPrice, Double maxPrice, Pageable pageable) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery()
+                .must(QueryBuilders.rangeQuery("price").gte(minPrice).lte(maxPrice));
+
+        if(categoryIds.size() > 0){
+            BoolQueryBuilder blcategory = QueryBuilders.boolQuery();
+            categoryIds.forEach(p->{
+                blcategory.should(QueryBuilders.termQuery("category.id", p));
+            });
+            boolQuery.must(blcategory);
+        }
+        if(trademarkIds.size() > 0){
+            BoolQueryBuilder bltrademark = QueryBuilders.boolQuery();
+            trademarkIds.forEach(p->{
+                bltrademark.should(QueryBuilders.termQuery("trademark.id", p));
+            });
+            boolQuery.must(bltrademark);
+        }
+
+        NativeSearchQuery nativeSearchQuery = new NativeSearchQueryBuilder()
+                .withQuery(boolQuery)
+                .withPageable(pageable)
+                .build();
+
+        SearchHits<ProductSearch> results = elasticsearchRestTemplate.search(nativeSearchQuery, ProductSearch.class, IndexCoordinates.of("product"));
+        List<ProductSearch> products = results.getSearchHits().stream()
+                .map(hit -> hit.getContent())
+                .collect(Collectors.toList());
+        return new PageImpl<>(products, pageable, results.getTotalHits());
     }
 }

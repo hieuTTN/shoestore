@@ -2,7 +2,9 @@ package com.web.api;
 
 import com.web.dto.ProductExcel;
 import com.web.dto.ProductSearch;
+import com.web.elasticsearch.repository.ProductSearchRepository;
 import com.web.entity.Product;
+import com.web.mapper.ProductMapper;
 import com.web.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -57,14 +59,24 @@ public class ProductApi {
         return new ResponseEntity<>(result, HttpStatus.OK);
     }
 
+//    @PostMapping("/public/search-full")
+//    public Page<Product> getProductsByCriteria(@RequestBody ProductSearch search, Pageable pageable) {
+//        return productService.findProductsByCriteria(search.getCategoryIds(), search.getTrademarkIds(), search.getMinPrice(), search.getMaxPrice(), pageable);
+//    }
+
     @PostMapping("/public/search-full")
-    public Page<Product> getProductsByCriteria(@RequestBody ProductSearch search, Pageable pageable) {
-        return productService.findProductsByCriteria(search.getCategoryIds(), search.getTrademarkIds(), search.getMinPrice(), search.getMaxPrice(), pageable);
+    public Page<com.web.elasticsearch.model.ProductSearch> searchFull(@RequestBody ProductSearch search, Pageable pageable) {
+        return productService.searchFullProduct(search.getCategoryIds(), search.getTrademarkIds(), search.getMinPrice(), search.getMaxPrice(), pageable);
     }
 
+//    @GetMapping("/public/search-by-param")
+//    public Page<Product> getProductsByCriteria(@RequestParam String search, Pageable pageable) {
+//        return productService.searchProduct(search, pageable);
+//    }
+
     @GetMapping("/public/search-by-param")
-    public Page<Product> getProductsByCriteria(@RequestParam String search, Pageable pageable) {
-        return productService.searchProduct(search, pageable);
+    public Page<com.web.elasticsearch.model.ProductSearch> getProductsByCriteria(@RequestParam String search, Pageable pageable) {
+        return productService.searchByParam(search, pageable);
     }
 
     @GetMapping("/admin/export-excel")

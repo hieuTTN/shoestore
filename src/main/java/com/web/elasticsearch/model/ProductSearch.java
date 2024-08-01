@@ -7,6 +7,8 @@ import com.web.entity.Trademark;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.elasticsearch.annotations.Document;
+import org.springframework.data.elasticsearch.annotations.Field;
+import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import javax.persistence.Id;
 import java.time.LocalDateTime;
@@ -34,8 +36,6 @@ public class ProductSearch {
 
     private String instructionSize;
 
-    private LocalDateTime createdDate;
-
     private Integer quantitySold;
 
     private Boolean deleted = false;
@@ -44,7 +44,5 @@ public class ProductSearch {
 
     private Trademark trademark;
 
-    private List<ProductImage> productImages;
-
-    private List<Size> sizes;
+    private List<ImageProductSearch> productImages;
 }
