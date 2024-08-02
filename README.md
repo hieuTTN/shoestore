@@ -6,6 +6,7 @@
 - Database: mysql
 - JDK: 17
 - Hệ điều hành: Window, linux
+- Công cụ: intellij, mysql workbench, elasticsearch tool 
 ### Các chức năng của project
 3 tác nhân chính:<br>
 <blockquote>
@@ -46,3 +47,13 @@
     + Quản lý đơn hàng đã đặt<br>
     + Đổi mật khẩu<br>
 </blockquote>
+
+### Hướng dẫn cài đặt project
+1. Cài đặt jdk 17 trước <br>
+2. Cài đặt intellij và mở project web bằng cách chọn file -> open -> chọn đến thư mục project
+3. Sau khi chọn project, vào lại file chọn project structure để chọn jdk cho project
+4. Cài đặt mysql workbench và import file sql
+5. vào file appication.properties để thay đổi url kết nối đến database
+### Hướng dẫn cài đặt elasticsearch
+- Điều kiện: Đã cài đặt máy ảo linux hoặc có 1 vps linux
+- File hướng dẫn cài đặt: elasticsearch.txt
